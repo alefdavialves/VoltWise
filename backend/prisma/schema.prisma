@@ -1,39 +1,35 @@
-datasource db {
-  provider = "mysql"
-}
+// prisma/schema.prisma
 
 generator client {
   provider = "prisma-client-js"
 }
 
-model User {
-  id        String    @id @default(uuid())
-  name      String
-  email     String    @unique
-  password  String
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  // Relacionamento: Um usuário pode ter vários veículos
-  vehicles  Vehicle[]
-
-  @@map("users")
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
 }
 
+model users {
+  id        String     @id
+  name      String
+  email     String     @unique
+  password  String
+  createdAt DateTime   @default(now())
+  updatedAt DateTime
+  vehicles  vehicles[]
+}
 
-model Vehicle {
-  id              String   @id @default(uuid())
+model vehicles {
+  id              String   @id
   brand           String
   model           String
   year            Int
-  batteryCapacity Float    // Capacidade da bateria em kWh (ex: 75.0)
+  batteryCapacity Float
   licensePlate    String?  @unique
   createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  // Relacionamento com a tabela de Usuário
+  updatedAt       DateTime
   userId          String
-  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  users           users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-  @@map("vehicles")
+  @@index([userId], map: "vehicles_userId_fkey")
 }

@@ -1,28 +1,3 @@
-import { PrismaClient } from '@prisma/client';
-import mysql from 'mysql2/promise';
-import 'dotenv/config';
-
-const pool = mysql.createPool(process.env.DATABASE_URL);
-
-const prisma = new PrismaClient({
-  adapter: {
-    provider: 'mysql',
-    async query(args) {
-      const [rows] = await pool.query({ sql: args.text, values: args.values, rowsAsArray: false });
-      return { data: rows };
-    },
-    async execute(args) {
-      const [result] = await pool.execute(args.text, args.values);
-      // O Prisma 7 precisa do formato de resultado completo para ler IDs auto-incrementais
-      return {
-        affectedRows: result.affectedRows || 0,
-        insertId: result.insertId || null
-      };
-    }
-  }
-});
-
-
 export const UserController = {
   //Create User
   async create(req, res) {
@@ -37,7 +12,7 @@ export const UserController = {
       }
 
       // Verifica se o e-mail já está cadastrado no banco
-      const userExists = await prisma.user.findUnique({
+      const userExists = await prisma.users.findUnique({
         where: { email },
       });
 
