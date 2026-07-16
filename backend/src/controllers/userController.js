@@ -71,7 +71,7 @@ export const UserController = {
 
       const userProfile = await prismaInstance.users.findUnique({
         where: {
-          userId: String(userId),
+          id: String(userId),
         },
         include: {
           vehicles: true, // 🟢 "Prisma, traz os veículos deste usuário para mim também!"

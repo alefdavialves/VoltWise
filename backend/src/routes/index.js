@@ -15,6 +15,14 @@ routes.post('/users', (req, res, next) => {
   next();
 }, UserController.create);
 
+
+// Rota 1: Listar apenas os veículos de um usuário específico
+routes.get("/users/:userId/vehicles", UserController.userVehicles)
+
+// Rota 2: Listar o perfil completo do usuário trazendo os seus veículos inclusos
+routes.get("/users/:userId/profile", UserController.userWithCars);
+
+
 // Rotas de Veículos
 routes.post('/vehicles', VehicleController.create);
 routes.get('/vehicles', VehicleController.listAll);
