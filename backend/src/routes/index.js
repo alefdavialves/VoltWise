@@ -10,7 +10,10 @@ const routes = Router();
 routes.use(prismaMiddleware);
 
 // Rotas de Usuários
-routes.post('/users', UserController.create);
+routes.post('/users', (req, res, next) => {
+  console.log('--> Rota /users foi chamada!');
+  next();
+}, UserController.create);
 
 // Rotas de Veículos
 routes.post('/vehicles', VehicleController.create);

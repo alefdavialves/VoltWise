@@ -10,24 +10,24 @@ datasource db {
 }
 
 model users {
-  id        String     @id
+  id        String     @id @default(uuid()) // 🟢 ID gerado automaticamente via UUID
   name      String
   email     String     @unique
   password  String
   createdAt DateTime   @default(now())
-  updatedAt DateTime
+  updatedAt DateTime   @updatedAt           // 🟢 Atualiza automaticamente no update
   vehicles  vehicles[]
 }
 
 model vehicles {
-  id              String   @id
+  id              String   @id @default(uuid()) // 🟢 ID gerado automaticamente via UUID
   brand           String
   model           String
   year            Int
   batteryCapacity Float
   licensePlate    String?  @unique
   createdAt       DateTime @default(now())
-  updatedAt       DateTime
+  updatedAt       DateTime @updatedAt           // 🟢 Atualiza automaticamente no update
   userId          String
   users           users    @relation(fields: [userId], references: [id], onDelete: Cascade)
 

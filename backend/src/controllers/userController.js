@@ -1,6 +1,10 @@
+import { prisma } from "../config/database.js";
+
 export const UserController = {
   //Create User
   async create(req, res) {
+    console.log("--> Entrou no UserController.create!");
+    console.log("REQ BODY:", req.body);
     try {
       const { name, email, password } = req.body;
 
@@ -21,7 +25,7 @@ export const UserController = {
       }
 
       // Cria o usuário no MySQL através do Prisma
-      const newUser = await prisma.user.create({
+      const newUser = await prisma.users.create({
         data: {
           name,
           email,
@@ -34,6 +38,56 @@ export const UserController = {
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro interno ao criar usuário." });
+    }
+  },
+
+  //Listar veiculos por usuario
+  async userVehicles(req, res) {
+    try {
+      const prismaInstance = req.prisma || prisma;
+      const { userId } = req.params;
+
+      const vehicles = await prismaInstance.vehicles.findMany({
+        where: {
+          userId: String(userId),
+        },
+      });
+
+      return res.status(200).json(vehicles);
+    } catch (error) {
+      return res.status(500).json({
+        error: "Erro interno ao listar veículos por usuário.",
+        detalhes: error.message || error,
+      });
+    }
+  },
+
+  //Listar Usuário com seus veículos
+
+  async userWithCars(req, res) {
+    try {
+      const prismaInstance = req.prisma || prisma;
+      const { userId } = req.params;
+
+      const userProfile = await prismaInstance.users.findUnique({
+        where: {
+          userId: String(userId),
+        },
+        include: {
+          vehicles: true, // 🟢 "Prisma, traz os veículos deste usuário para mim também!"
+        },
+      });
+
+      if (!userProfile) {
+        return res.status(404).json({ error: "Usuário não encontrado." });
+      }
+
+      return res.status(200).json(userProfile);
+    } catch (error) {
+      return res.status(500).json({
+        error: "Erro interno ao listar usuário com seus veículos.",
+        detalhes: error.message || error,
+      });
     }
   },
 };

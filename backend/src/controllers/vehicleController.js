@@ -1,42 +1,59 @@
-import { prisma } from '../config/database.js';
-import crypto from 'crypto';
+import { prisma } from "../config/database.js";
 
 export const VehicleController = {
   async create(req, res) {
     try {
       const { plate, model, brand, userId, year, batteryCapacity } = req.body;
 
-      if (!plate || !model || !brand || !userId || !year || !batteryCapacity) {
+      // Validação ultra segura (garante que nenhuma string veio vazia ou apenas com espaços)
+      if (
+        !plate?.trim() ||
+        !model?.trim() ||
+        !brand?.trim() ||
+        !userId?.trim() ||
+        !year ||
+        !batteryCapacity
+      ) {
         return res.status(400).json({
-          error: "Todos os campos (plate, model, brand, userId, year, batteryCapacity) são obrigatórios.",
+          error:
+            "Todos os campos (plate, model, brand, userId, year, batteryCapacity) são obrigatórios e não podem estar vazios.",
         });
       }
+
+      console.log("Placa recebida na REQ:", plate);
 
       const vehicleExists = await prisma.vehicles.findUnique({
         where: { licensePlate: plate },
       });
 
+      console.log("Resultado da busca no banco:", vehicleExists);
+
       if (vehicleExists) {
-        return res.status(400).json({ error: "Esta placa já está cadastrada." });
+        return res
+          .status(400)
+          .json({ error: "Esta placa já está cadastrada." });
       }
 
       const newVehicle = await prisma.vehicles.create({
         data: {
-          id: crypto.randomUUID(),
-          brand,
-          model,
+          // O id é gerado automaticamente pelo @default(uuid()) no seu schema.prisma!
+          brand: brand.trim(),
+          model: model.trim(),
           year: Number(year),
           batteryCapacity: Number(batteryCapacity),
-          licensePlate: plate,
+          licensePlate: plate.trim(),
           userId: String(userId),
-          updatedAt: new Date(),
+          // O updatedAt também é atualizado de forma automática com o @updatedAt do Prisma!
         },
       });
 
       return res.status(201).json(newVehicle);
     } catch (error) {
       console.error(error);
-      return res.status(500).json({ error: "Erro interno ao criar veículo.", detalhes: error.message });
+      return res.status(500).json({
+        error: "Erro interno ao criar veículo.",
+        detalhes: error.message,
+      });
     }
   },
 
@@ -52,4 +69,6 @@ export const VehicleController = {
       });
     }
   },
+
+  
 };
