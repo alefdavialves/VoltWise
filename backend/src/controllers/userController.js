@@ -1,4 +1,5 @@
 import { prisma } from "../config/database.js";
+import bcrypt from "bcrypt";
 
 export const UserController = {
   //Create User
@@ -24,17 +25,20 @@ export const UserController = {
         return res.status(400).json({ error: "Este e-mail já está em uso." });
       }
 
+      const passwordHash = await bcrypt.hash(password, 10);
+
       // Cria o usuário no MySQL através do Prisma
       const newUser = await prisma.users.create({
         data: {
           name,
           email,
-          password, // Obs: No futuro vamos criptografar isso aqui por segurança!
+          password: passwordHash, // Obs: No futuro vamos criptografar isso aqui por segurança!
         },
       });
 
-      // Retorna o usuário criado (sem expor a senha por boas práticas)
-      return res.status(201).json(newUser);
+      const { password: _, ...userWithoutPassword } = newUser;
+      return res.status(201).json(userWithoutPassword);
+      
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro interno ao criar usuário." });
@@ -90,4 +94,42 @@ export const UserController = {
       });
     }
   },
+
+  async login(req, res) {
+    try {
+      const prismaInstance = req.prisma || prisma;
+      const { email, password } = req.body;
+
+      if (!email || !password) {
+        return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+      }
+
+      const user = await prismaInstance.users.findUnique({
+        where: { email },
+      });
+
+      if (!user) {
+        return res.status(401).json({ error: "E-mail ou senha inválidos." });
+      }
+
+      const passwordMatch = await bcrypt.compare(password, user.password);
+
+      if (!passwordMatch) {
+        return res.status(401).json({ error: "E-mail ou senha inválidos." });
+      }
+
+      const { password: _, ...userWithoutPassword } = user;
+      
+      return res.status(200).json({
+        message: "Login realizado com sucesso!",
+        user: userWithoutPassword
+      });
+
+    } catch (error) {
+      return res.status(500).json({
+        error: "Erro interno ao realizar login.",
+        detalhes: error.message || error,
+      });
+    }
+  }
 };

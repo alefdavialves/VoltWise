@@ -70,5 +70,22 @@ export const VehicleController = {
     }
   },
 
-  
+  async delete(req, res) {
+    try {
+      const prismaInstance = req.prisma || prisma;
+      const { vehicleId } = req.params;
+
+      const vehicle = await prismaInstance.vehicles.delete({
+        where: {
+          id: String(vehicleId),
+        },
+      });
+      return res.status(200).json(vehicle);
+    } catch (error) {
+      return res.status(500).json({
+        error: "Erro interno ao deletar veículos.",
+        detalhes: error.message || error,
+      });
+    }
+  },
 };
