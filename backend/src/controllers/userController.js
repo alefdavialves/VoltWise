@@ -1,5 +1,6 @@
 import { prisma } from "../config/database.js";
 import bcrypt from "bcrypt";
+import jwt from "jsonwebtoken";
 
 export const UserController = {
   //Create User
@@ -38,7 +39,6 @@ export const UserController = {
 
       const { password: _, ...userWithoutPassword } = newUser;
       return res.status(201).json(userWithoutPassword);
-      
     } catch (error) {
       console.error(error);
       return res.status(500).json({ error: "Erro interno ao criar usuário." });
@@ -101,7 +101,9 @@ export const UserController = {
       const { email, password } = req.body;
 
       if (!email || !password) {
-        return res.status(400).json({ error: "E-mail e senha são obrigatórios." });
+        return res
+          .status(400)
+          .json({ error: "E-mail e senha são obrigatórios." });
       }
 
       const user = await prismaInstance.users.findUnique({
@@ -118,18 +120,26 @@ export const UserController = {
         return res.status(401).json({ error: "E-mail ou senha inválidos." });
       }
 
+      const token = jwt.sign(
+        { id: user.id }, 
+        "naotemsenha", // Sua chave de assinatura
+        { expiresIn: "1d" }
+      );
+
       const { password: _, ...userWithoutPassword } = user;
-      
+
       return res.status(200).json({
         message: "Login realizado com sucesso!",
-        user: userWithoutPassword
+        user: userWithoutPassword,
+        token,
       });
 
-    } catch (error) {
+    } 
+    catch (error) {
       return res.status(500).json({
         error: "Erro interno ao realizar login.",
         detalhes: error.message || error,
       });
     }
-  }
+  },
 };
